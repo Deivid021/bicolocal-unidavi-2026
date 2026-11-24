@@ -36,6 +36,27 @@ void main() {
     expect(find.text('Entre para publicar seu serviço.'), findsOneWidget);
   });
 
+  testWidgets('erro do formulário some ao corrigir o campo', (tester) async {
+    await auth.criarConta('Kaue', 'kaue@exemplo.com', '123456');
+    await tester.pumpWidget(const BicoLocalApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Oferecer serviço'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Publicar serviço'), 200,
+        scrollable: find
+            .descendant(of: find.byType(Form), matching: find.byType(Scrollable))
+            .first);
+    await tester.tap(find.text('Publicar serviço'));
+    await tester.pump();
+    expect(find.text('Campo obrigatório'), findsOneWidget); // descrição vazia
+
+    await tester.enterText(
+        find.widgetWithText(TextFormField, 'Descreva seu serviço'), 'Pequenos reparos');
+    await tester.pump();
+    expect(find.text('Campo obrigatório'), findsNothing);
+  });
+
   testWidgets('cliente logado avalia um prestador', (tester) async {
     await auth.criarConta('Kaue', 'kaue@exemplo.com', '123456');
     await tester.pumpWidget(const BicoLocalApp());

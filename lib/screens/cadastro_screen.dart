@@ -27,6 +27,9 @@ class _CadastroScreenState extends State<CadastroScreen> {
   late bool _disponivel = widget.editando?.disponivel ?? true;
   bool _salvando = false;
 
+  /// Depois da primeira tentativa, revalida cada campo enquanto o usuário corrige.
+  AutovalidateMode _validacao = AutovalidateMode.disabled;
+
   bool get _editando => widget.editando != null;
 
   @override
@@ -50,7 +53,10 @@ class _CadastroScreenState extends State<CadastroScreen> {
   }
 
   Future<void> _salvar() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _validacao = AutovalidateMode.onUserInteraction);
+      return;
+    }
     final digitos = _telefone.text.replaceAll(RegExp(r'\D'), '');
     final preco = _preco.text.trim();
     final dados = Prestador(
@@ -92,6 +98,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
       appBar: AppBar(title: Text(_editando ? 'Editar anúncio' : 'Oferecer serviço')),
       body: Form(
         key: _formKey,
+        autovalidateMode: _validacao,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [

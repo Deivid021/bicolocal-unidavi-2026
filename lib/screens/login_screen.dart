@@ -33,6 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _criandoConta = false;
   bool _enviando = false;
+
+  /// Depois da primeira tentativa, revalida cada campo enquanto o usuário corrige.
+  AutovalidateMode _validacao = AutovalidateMode.disabled;
   bool _senhaVisivel = false;
   String? _erro;
 
@@ -45,7 +48,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _enviar() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _validacao = AutovalidateMode.onUserInteraction);
+      return;
+    }
     setState(() {
       _enviando = true;
       _erro = null;
@@ -91,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(title: Text(_criandoConta ? 'Criar conta' : 'Entrar')),
       body: Form(
         key: _formKey,
+        autovalidateMode: _validacao,
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
