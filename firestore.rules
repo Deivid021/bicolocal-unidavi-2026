@@ -1,0 +1,69 @@
+rules_version = '2';
+
+// Regras de segurança do Cloud Firestore do BicoLocal.
+// Publicar: Console do Firebase > Firestore > Regras (ou `firebase deploy --only firestore:rules`).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado() {
+      return request.auth != null;
+    }
+
+    function anuncioValido(d) {
+      return d.nome is string && d.nome.size() > 0 && d.nome.size() <= 80
+          && d.descricao is string && d.descricao.size() > 0 && d.descricao.size() <= 300
+          && d.categoriaId is string && d.bairro is string
+          && d.telefone is string && d.telefone.matches('^55[0-9]{10,11}$')
+          && d.faixaPreco is string && d.faixaPreco.size() <= 60
+          && d.disponivel is bool;
+    }
+
+    // Só os campos de nota mudam, e no máximo +1 avaliação por vez.
+    function apenasNotas() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['somaNotas', 'totalAvaliacoes'])
+          && request.resource.data.totalAvaliacoes - resource.data.totalAvaliacoes in [0, 1];
+    }
+
+    match /prestadores/{id} {
+      // Qualquer pessoa pode ver os prestadores, mesmo sem login.
+      allow read: if true;
+
+      allow create: if logado()
+          && request.resource.data.donoUid == request.auth.uid
+          && anuncioValido(request.resource.data);
+
+      // O dono edita o anúncio, sem mexer nas notas nem no dono.
+      allow update: if logado() && (
+          (resource.data.donoUid == request.auth.uid
+              && anuncioValido(request.resource.data)
+              && !request.resource.data.diff(resource.data).affectedKeys()
+                    .hasAny(['donoUid', 'somaNotas', 'totalAvaliacoes']))
+          // Outro usuário só altera a média, ao avaliar (transação do app).
+          || (resource.data.donoUid != request.auth.uid && apenasNotas())
+      );
+
+      allow delete: if logado() && resource.data.donoUid == request.auth.uid;
+
+      match /avaliacoes/{autorUid} {
+        allow read: if true;
+        // Uma avaliação por usuário (id do documento = uid), nota de 1 a 5,
+        // e ninguém avalia o próprio anúncio.
+        allow create, update: if logado()
+            && autorUid == request.auth.uid
+            && request.resource.data.autorUid == request.auth.uid
+            && request.resource.data.nota is int
+            && request.resource.data.nota >= 1 && request.resource.data.nota <= 5
+            && request.resource.data.comentario.size() <= 200
+            && get(/databases/$(database)/documents/prestadores/$(id)).data.donoUid
+                 != request.auth.uid;
+        allow delete: if logado() && autorUid == request.auth.uid;
+      }
+    }
+
+    // Favoritos: cada usuário lê e escreve apenas o próprio documento.
+    match /usuarios/{uid} {
+      allow read, write: if logado() && request.auth.uid == uid;
+    }
+  }
+}
