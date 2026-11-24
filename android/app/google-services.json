@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "96459906159",
+    "project_id": "bicolocal-unidavi-2026-923d6",
+    "storage_bucket": "bicolocal-unidavi-2026-923d6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:96459906159:android:08359c85af50a06934819a",
+        "android_client_info": {
+          "package_name": "br.edu.unidavi.bicolocal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpXqIwtnRAeFdpkRJHT_Vt2XGK0JcI7eQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
